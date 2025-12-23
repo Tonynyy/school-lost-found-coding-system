@@ -96,7 +96,7 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
               <Tag size={18} className="text-indigo-600" />
               1. 物品分类映射 (Type)
             </h2>
-            <p className="text-sm text-slate-500 mt-1">例如：文具 -> W, 书本 -> S。编码长度限制：1位。</p>
+            <p className="text-sm text-slate-500 mt-1">例如：文具 {"->"} W, 书本 {"->"} S。编码长度限制：1位。</p>
           </div>
         </div>
         
@@ -178,7 +178,7 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
                   </tr>
                 ))}
                 {state.categories.length === 0 && (
-                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 italic">暂无规则，请在上方添加（例如：电子产品 -> E）</td></tr>
+                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 italic">暂无规则，请在上方添加（例如：电子产品 {"->"} E）</td></tr>
                 )}
               </tbody>
             </table>

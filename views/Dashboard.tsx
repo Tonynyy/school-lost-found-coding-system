@@ -299,7 +299,7 @@ const Dashboard: React.FC<ViewProps> = ({ state }) => {
            </div>
            <div className="mt-6 space-y-2 overflow-y-auto h-full pr-2 pb-2 custom-scrollbar">
               {state.lostItems.length === 0 && (
-                <div className="text-slate-600 italic">>> 暂无活动记录。等待数据输入...</div>
+                <div className="text-slate-600 italic">{">> "}暂无活动记录。等待数据输入...</div>
               )}
               {state.lostItems.slice(0, 10).map((item, i) => (
                 <div key={item.id} className="flex gap-3 animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
