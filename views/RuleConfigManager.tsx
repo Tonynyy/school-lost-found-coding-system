@@ -94,9 +94,9 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
           <div>
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <Tag size={18} className="text-indigo-600" />
-              1. 物品分类映射 (Type)
+              1. 失物类型
             </h2>
-            <p className="text-sm text-slate-500 mt-1">例如：文具 {"->"} W, 书本 {"->"} S。编码长度限制：1位。</p>
+            <p className="text-sm text-slate-500 mt-1">例如：衣物 -> C, 水杯 -> B。编码长度限制：1位。</p>
           </div>
         </div>
         
@@ -178,7 +178,7 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
                   </tr>
                 ))}
                 {state.categories.length === 0 && (
-                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 italic">暂无规则，请在上方添加（例如：电子产品 {"->"} E）</td></tr>
+                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 italic">暂无规则，请在上方添加（例如：电子产品 -> E）</td></tr>
                 )}
               </tbody>
             </table>
@@ -192,7 +192,7 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
           <div>
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <MapPin size={18} className="text-emerald-600" />
-              2. 地点映射 (Location)
+              2. 失物地点
             </h2>
             <p className="text-sm text-slate-500 mt-1">校园地点已固定，请为每个地点分配一个 <strong className="text-slate-700">1位代码</strong>。</p>
           </div>

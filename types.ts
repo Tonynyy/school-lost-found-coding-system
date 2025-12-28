@@ -1,3 +1,5 @@
+import React from 'react';
+
 export interface EncodingRule {
   id: string;
   label: string;

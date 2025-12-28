@@ -10,8 +10,7 @@ import { AlertCircle, CheckCircle, Info, X } from 'lucide-react';
 
 // Preset Categories
 const INITIAL_CATEGORIES: EncodingRule[] = [
-  { id: 'c_stationery', label: '文具', code: '' },
-  { id: 'c_electronics', label: '电子产品', code: '' },
+  { id: 'c_clothing', label: '衣物', code: '' },
   { id: 'c_bottle', label: '水杯', code: '' },
 ];
 
@@ -30,7 +29,8 @@ const FIXED_LOCATIONS: EncodingRule[] = [
 const App: React.FC = () => {
   // Global State
   const [globalState, setGlobalState] = useState<GlobalState>(() => {
-    const saved = localStorage.getItem('smart-campus-state-v2');
+    // Bumped version to v3 to force load new presets
+    const saved = localStorage.getItem('smart-campus-state-v3');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -53,7 +53,7 @@ const App: React.FC = () => {
 
   // Persistence
   useEffect(() => {
-    localStorage.setItem('smart-campus-state-v2', JSON.stringify(globalState));
+    localStorage.setItem('smart-campus-state-v3', JSON.stringify(globalState));
   }, [globalState]);
 
   // Notification Timer
