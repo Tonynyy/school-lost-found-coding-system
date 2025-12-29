@@ -1,82 +1,128 @@
 import React, { useState } from 'react';
 import { ViewProps, EncodingRule } from '../types';
-import { Plus, Trash2, Info, Tag, MapPin, AlertTriangle, ArrowRight, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Info, Tag, MapPin, AlertTriangle, ArrowRight, Edit2, Check, X } from 'lucide-react';
 
 const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotification }) => {
   const [newCatLabel, setNewCatLabel] = useState('');
   const [newCatCode, setNewCatCode] = useState('');
+  
+  // Local state to track edits before confirmation
+  // Key: Rule ID (Category or Location), Value: Current input string
+  const [tempCodes, setTempCodes] = useState<Record<string, string>>({});
 
   const addCategory = () => {
     if (!newCatLabel || !newCatCode) return;
     
-    const upperCode = newCatCode.toUpperCase().slice(0, 1);
+    // VALIDATION ON SUBMIT: Force Uppercase
+    const formattedCode = newCatCode.toUpperCase();
 
     // Duplicate Check
-    if (state.categories.some(c => c.code === upperCode && c.code !== '')) {
-      showNotification('error', `添加失败：代码 "${upperCode}" 已经被使用，请更换其他字符。`);
+    if (state.categories.some(c => c.code === formattedCode && c.code !== '')) {
+      showNotification('error', `添加失败：代码 "${formattedCode}" 已经被使用，请重新输入。`);
+      setNewCatCode('');
       return;
     }
 
     const newRule: EncodingRule = {
       id: `c-${Date.now()}`,
       label: newCatLabel,
-      code: upperCode, 
+      code: formattedCode, 
     };
     setState(prev => ({ ...prev, categories: [...prev.categories, newRule] }));
     setNewCatLabel('');
     setNewCatCode('');
-    showNotification('success', `已成功添加规则：${newCatLabel} -> [${upperCode}]`);
+    showNotification('success', `已成功添加规则：${newCatLabel} -> [${formattedCode}]`);
   };
 
   const removeCategory = (id: string) => {
     setState(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== id) }));
+    const newTemps = { ...tempCodes };
+    delete newTemps[id];
+    setTempCodes(newTemps);
   };
 
-  const updateCategory = (id: string, field: 'label' | 'code', value: string) => {
-    if (field === 'code') {
-      const upper = value.toUpperCase().slice(0, 1);
-      
-      // Duplicate check (ignore self and ignore empty input while typing)
-      if (upper && state.categories.some(c => c.id !== id && c.code === upper)) {
-        showNotification('error', `规则冲突：代码 "${upper}" 已被其他分类占用！`);
-        return; // Prevent update
-      }
+  const handleCodeChange = (id: string, value: string) => {
+    // Allow any input while typing (Lower/Upper/Mixed)
+    setTempCodes(prev => ({ ...prev, [id]: value }));
+  };
 
-      setState(prev => ({
-        ...prev,
-        categories: prev.categories.map(c => 
-          c.id === id ? { ...c, code: upper } : c
-        )
-      }));
+  // Save logic for Categories
+  const saveCategoryCode = (id: string) => {
+    const rawValue = tempCodes[id];
+    if (rawValue === undefined) return;
+
+    // 1. Force Uppercase
+    const formatted = rawValue.toUpperCase();
+
+    // 2. Duplicate Check (Categories)
+    const isDuplicate = state.categories.some(c => c.id !== id && c.code === formatted);
+
+    if (isDuplicate) {
+      showNotification('error', `保存失败：分类代码【${formatted}】已存在！请重新输入。`);
+      setTempCodes(prev => ({ ...prev, [id]: '' })); // Clear input
     } else {
       setState(prev => ({
         ...prev,
         categories: prev.categories.map(c => 
-          c.id === id ? { ...c, label: value } : c
+          c.id === id ? { ...c, code: formatted } : c
         )
       }));
+      
+      const newTemps = { ...tempCodes };
+      delete newTemps[id];
+      setTempCodes(newTemps);
+      
+      showNotification('success', '分类规则代码已更新');
     }
   };
 
-  const updateLocationCode = (id: string, code: string) => {
-    const upper = code.toUpperCase().slice(0, 1);
-    
-    // Duplicate check for locations
-    if (upper && state.locations.some(l => l.id !== id && l.code === upper)) {
-        showNotification('error', `规则冲突：地点代码 "${upper}" 已存在！`);
-        return;
-    }
+  // Save logic for Locations
+  const saveLocationCode = (id: string) => {
+    const rawValue = tempCodes[id];
+    if (rawValue === undefined) return;
 
+    // 1. Force Uppercase
+    const formatted = rawValue.toUpperCase();
+
+    // 2. Duplicate Check (Locations)
+    const isDuplicate = state.locations.some(l => l.id !== id && l.code === formatted);
+
+    if (isDuplicate) {
+      showNotification('error', `保存失败：地点代码【${formatted}】已存在！请重新输入。`);
+      setTempCodes(prev => ({ ...prev, [id]: '' })); // Clear input
+    } else {
+      setState(prev => ({
+        ...prev,
+        locations: prev.locations.map(loc => 
+          loc.id === id ? { ...loc, code: formatted } : loc
+        )
+      }));
+      
+      const newTemps = { ...tempCodes };
+      delete newTemps[id];
+      setTempCodes(newTemps);
+      
+      showNotification('success', '地点规则代码已更新');
+    }
+  };
+
+  const cancelEdit = (id: string) => {
+    const newTemps = { ...tempCodes };
+    delete newTemps[id];
+    setTempCodes(newTemps);
+  };
+
+  const updateLabel = (id: string, value: string) => {
     setState(prev => ({
       ...prev,
-      locations: prev.locations.map(loc => 
-        loc.id === id ? { ...loc, code: upper } : loc
+      categories: prev.categories.map(c => 
+        c.id === id ? { ...c, label: value } : c
       )
     }));
   };
 
   return (
-    <div className="space-y-8 relative">
+    <div className="space-y-8 relative pb-12">
       
       {/* Explanation Banner */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
@@ -84,7 +130,7 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
         <div className="text-sm text-amber-800">
           <p className="font-bold">编码任务说明：</p>
           <p>请为下方的物品分类和固定地点设置对应的“编码字符”。系统将根据这些规则自动生成唯一的物品 ID。</p>
-          <p className="mt-1 text-xs text-amber-600">*注意：同一类别的编码字符不能重复。未设置代码的分类将无法用于录入。</p>
+          <p className="mt-1 text-xs text-amber-600 font-bold">* 支持输入：英文字母、汉字、数字及其组合。输入完毕请点击“确定”，系统将自动转换为大写并检查重复。</p>
         </div>
       </div>
 
@@ -96,7 +142,6 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
               <Tag size={18} className="text-indigo-600" />
               1. 失物类型
             </h2>
-            <p className="text-sm text-slate-500 mt-1">例如：衣物 -&gt; C, 水杯 -&gt; B。编码长度限制：1位。</p>
           </div>
         </div>
         
@@ -111,11 +156,10 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
             />
             <input
               type="text"
-              placeholder="代码（1位，如：M）"
-              className="px-4 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase"
-              maxLength={1}
+              placeholder="自定义代码"
+              className="px-4 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               value={newCatCode}
-              onChange={e => setNewCatCode(e.target.value)}
+              onChange={e => setNewCatCode(e.target.value)} 
             />
             <button
               onClick={addCategory}
@@ -130,41 +174,69 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">分类名称 (点击修改)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">映射代码 (点击修改)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-1/3">分类名称 (点击修改)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-1/3">映射代码 (修改后点确定)</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
-                {state.categories.map(cat => (
+                {state.categories.map(cat => {
+                  const isEditing = tempCodes[cat.id] !== undefined;
+                  const displayValue = isEditing ? tempCodes[cat.id] : cat.code;
+                  
+                  return (
                   <tr key={cat.id} className="group hover:bg-indigo-50/30 transition-colors">
                     <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-slate-900 relative">
-                      <input 
-                         type="text"
-                         value={cat.label}
-                         onChange={(e) => updateCategory(cat.id, 'label', e.target.value)}
-                         className="w-full bg-transparent border-b border-transparent hover:border-indigo-200 focus:border-indigo-500 focus:ring-0 px-2 py-1 transition-all outline-none"
-                      />
-                      <Edit2 size={12} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 opacity-0 group-hover:opacity-100 pointer-events-none" />
+                      <div className="relative w-full">
+                        <input 
+                           type="text"
+                           value={cat.label}
+                           onChange={(e) => updateLabel(cat.id, e.target.value)}
+                           className="w-full bg-transparent border-b border-transparent hover:border-indigo-200 focus:border-indigo-500 focus:ring-0 px-2 py-1 pr-8 transition-all outline-none"
+                        />
+                        <Edit2 size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 opacity-0 group-hover:opacity-100 pointer-events-none" />
+                      </div>
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm font-mono relative">
-                      <input 
-                         type="text"
-                         value={cat.code}
-                         maxLength={1}
-                         placeholder="?"
-                         onChange={(e) => updateCategory(cat.id, 'code', e.target.value)}
-                         className={`w-16 text-center border rounded focus:ring-2 focus:ring-indigo-500 uppercase px-2 py-1 outline-none transition-all font-bold ${
-                           cat.code 
-                             ? 'bg-indigo-50 border-indigo-100 text-indigo-600' 
-                             : 'bg-red-50 border-red-200 text-red-400 placeholder-red-300'
-                         }`}
-                      />
-                      {!cat.code && (
-                         <span className="absolute left-24 top-1/2 -translate-y-1/2 text-xs text-red-400 font-normal">
-                           ← 需设置
-                         </span>
-                      )}
+                    <td className="px-6 py-3 whitespace-nowrap text-sm font-mono">
+                      <div className="flex items-center gap-2">
+                        <input 
+                           type="text"
+                           value={displayValue}
+                           placeholder="?"
+                           onChange={(e) => handleCodeChange(cat.id, e.target.value)}
+                           className={`min-w-[6rem] max-w-[12rem] text-center border rounded focus:ring-2 focus:ring-indigo-500 px-2 py-1 outline-none transition-all font-bold ${
+                             !cat.code && !isEditing
+                               ? 'bg-red-50 border-red-200 text-red-400 placeholder-red-300'
+                               : 'bg-indigo-50 border-indigo-100 text-indigo-600'
+                           }`}
+                        />
+                        
+                        {/* Confirm/Cancel Buttons */}
+                        {isEditing ? (
+                          <div className="flex items-center gap-1 animate-fade-in">
+                            <button 
+                              onClick={() => saveCategoryCode(cat.id)}
+                              className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors shadow-sm"
+                              title="确定并保存"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button 
+                              onClick={() => cancelEdit(cat.id)}
+                              className="p-1 bg-slate-200 text-slate-500 rounded hover:bg-slate-300 transition-colors"
+                              title="取消修改"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                           !cat.code && (
+                             <span className="text-xs text-red-400 font-normal whitespace-nowrap animate-pulse">
+                               ← 需设置
+                             </span>
+                           )
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
                       <button 
@@ -176,9 +248,9 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
                       </button>
                     </td>
                   </tr>
-                ))}
+                )})}
                 {state.categories.length === 0 && (
-                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 italic">暂无规则，请在上方添加（例如：电子产品 -&gt; E）</td></tr>
+                  <tr><td colSpan={3} className="text-center py-8 text-slate-400 italic">暂无规则，请在上方添加</td></tr>
                 )}
               </tbody>
             </table>
@@ -194,13 +266,16 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
               <MapPin size={18} className="text-emerald-600" />
               2. 失物地点
             </h2>
-            <p className="text-sm text-slate-500 mt-1">校园地点已固定，请为每个地点分配一个 <strong className="text-slate-700">1位代码</strong>。</p>
           </div>
         </div>
         
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {state.locations.map(loc => (
+            {state.locations.map(loc => {
+               const isEditing = tempCodes[loc.id] !== undefined;
+               const displayValue = isEditing ? tempCodes[loc.id] : loc.code;
+               
+               return (
                <div key={loc.id} className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 hover:bg-white transition-all hover:shadow-md group">
                   <div className="text-sm font-bold text-slate-700 mb-2 flex justify-between">
                     {loc.label}
@@ -211,22 +286,43 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 font-mono">CODE:</span>
-                    <input 
-                      type="text"
-                      className={`w-full border-b-2 bg-transparent text-center font-mono font-bold text-lg uppercase outline-none transition-colors ${
-                        loc.code 
-                         ? 'border-slate-300 focus:border-emerald-500 text-slate-900' 
-                         : 'border-red-300 focus:border-emerald-500 text-red-400'
-                      }`}
-                      maxLength={1}
-                      value={loc.code}
-                      placeholder="?"
-                      onChange={(e) => updateLocationCode(loc.id, e.target.value)}
-                    />
+                    <span className="text-xs text-slate-400 font-mono shrink-0">CODE:</span>
+                    <div className="flex-1 flex items-center gap-2">
+                      <input 
+                        type="text"
+                        className={`w-full min-w-0 border-b-2 bg-transparent text-center font-mono font-bold text-lg outline-none transition-colors ${
+                          !loc.code && !isEditing
+                            ? 'border-red-300 focus:border-emerald-500 text-red-400 placeholder-red-300' 
+                            : 'border-slate-300 focus:border-emerald-500 text-slate-900'
+                        }`}
+                        value={displayValue}
+                        placeholder="?"
+                        onChange={(e) => handleCodeChange(loc.id, e.target.value)}
+                      />
+                      
+                      {/* Confirm/Cancel Buttons for Location */}
+                      {isEditing && (
+                        <div className="flex items-center gap-1 animate-fade-in shrink-0">
+                          <button 
+                            onClick={() => saveLocationCode(loc.id)}
+                            className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors shadow-sm"
+                            title="确定并保存"
+                          >
+                            <Check size={14} />
+                          </button>
+                          <button 
+                            onClick={() => cancelEdit(loc.id)}
+                            className="p-1 bg-slate-200 text-slate-500 rounded hover:bg-slate-300 transition-colors"
+                            title="取消修改"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                </div>
-            ))}
+            )})}
           </div>
         </div>
       </div>
@@ -250,7 +346,7 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
                  <div className="text-2xl font-bold text-white mb-1">物品分类</div>
                  <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-sm text-slate-400">代码位:</span>
-                    <span className="font-mono text-xl text-indigo-400 font-bold">T</span>
+                    <span className="font-mono text-lg text-indigo-400 font-bold">自定义(中/英)</span>
                  </div>
               </div>
 
@@ -263,7 +359,7 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
                  <div className="text-2xl font-bold text-white mb-1">地点 + 楼层</div>
                  <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-sm text-slate-400">代码位:</span>
-                    <span className="font-mono text-xl text-emerald-400 font-bold">L F</span>
+                    <span className="font-mono text-lg text-emerald-400 font-bold">自定义 + F</span>
                  </div>
               </div>
 
@@ -292,14 +388,6 @@ const RuleConfigManager: React.FC<ViewProps> = ({ state, setState, showNotificat
                     <span className="font-mono text-sm text-pink-400 font-bold">G CC NN</span>
                  </div>
               </div>
-
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center gap-4 justify-center">
-               <span className="text-slate-500 text-sm">完整格式示例:</span>
-               <code className="bg-black/40 px-4 py-2 rounded text-slate-400 font-mono text-sm">
-                 T-LF-YYMMDDHHMM-GCCNN
-               </code>
             </div>
         </div>
       </div>

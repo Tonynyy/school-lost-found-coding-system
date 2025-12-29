@@ -45,21 +45,14 @@ const App: React.FC = () => {
     };
   });
 
-  // Main scroll container ref
-  const mainContentRef = useRef<HTMLDivElement>(null);
-
   // Default view changed to CONFIG as requested
   const [currentView, setCurrentView] = useState<ViewState>('CONFIG');
-
-  // Reset scroll position on view change
-  useEffect(() => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTop = 0;
-    }
-  }, [currentView]);
   
   // Notification State
   const [notification, setNotification] = useState<{type: NotificationType, message: string} | null>(null);
+
+  // Scroll Container Ref
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
   // Persistence
   useEffect(() => {
@@ -73,6 +66,13 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [notification]);
+
+  // Reset Scroll on View Change
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [currentView]);
 
   const showNotification = (type: NotificationType, message: string) => {
     setNotification({ type, message });
@@ -114,7 +114,10 @@ const App: React.FC = () => {
       
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
 
-      <div ref={mainContentRef} className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <div 
+        ref={mainContentRef}
+        className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
+      >
         <header className="sticky top-0 z-30 flex w-full items-center justify-between bg-white/80 px-8 py-4 backdrop-blur-md border-b border-slate-200">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-slate-800">{getPageTitle()}</h1>

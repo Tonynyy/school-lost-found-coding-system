@@ -168,7 +168,8 @@ const StandardEntryForm: React.FC<ViewProps> = ({ state, setState, showNotificat
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">物品分类 (1位代码)</label>
+                  {/* UPDATED Label */}
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">物品分类 (对应代码)</label>
                   <select 
                     required
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
@@ -191,7 +192,8 @@ const StandardEntryForm: React.FC<ViewProps> = ({ state, setState, showNotificat
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">发现地点 (1位代码)</label>
+                    {/* UPDATED Label */}
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">发现地点 (对应代码)</label>
                     <select 
                       required
                       className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
@@ -215,8 +217,9 @@ const StandardEntryForm: React.FC<ViewProps> = ({ state, setState, showNotificat
                     </select>
                  </div>
                  <div>
+                    {/* UPDATED Label */}
                     <label className="block text-xs font-semibold text-slate-500 mb-1">
-                      楼层 (1位) {isOutdoor && <span className="text-amber-500 font-normal ml-1">室外固定为0层</span>}
+                      楼层 {isOutdoor && <span className="text-amber-500 font-normal ml-1">室外固定为0层</span>}
                     </label>
                     <select 
                       className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none ${
